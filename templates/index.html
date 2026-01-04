@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Churn Predictor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ range(1, 10000) | random }}">
+
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Churn Prediction Platform</h1>
+
+        <div id="error-box"></div>
+
+        <div class="dashboard-header">
+            <div class="nav-tabs">
+                <button id="tab-active" class="nav-tab active" onclick="switchView('active_clean.csv')">Active
+                    Customers</button>
+                <button id="tab-retired" class="nav-tab" onclick="switchView('retired_clean.csv')">Retired
+                    Customers</button>
+                <div class="model-info-tooltip">
+                    <span class="help-icon">i</span>
+                    <div class="tooltip-content">
+                        <div class="tooltip-section">
+                            <strong>Active Model</strong>
+                            <p>Optimized for currently employed customers using a multi-model ensemble (XGBoost + Random
+                                Forest + LightGBM) to capture complex patterns.</p>
+                        </div>
+                        <div class="tooltip-section">
+                            <strong>Retired Model</strong>
+                            <p>Specifically tuned for the retired demographic using an optimized XGBoost model, focusing
+                                on stability and long-term loyalty factors. More features so less complex model with
+                                same prediction power</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn-view" onclick="toggleInfo()">Analysis Definitions</button>
+                <a href="/dashboard" class="btn-view" style="text-decoration:none;">Executive Dashboard</a>
+            </div>
+        </div>
+
+        <div id="progress-container-loading" style="display:none; margin-top:20px;">
+            <!-- Loading spinner hidden by default as we expect instant load -->
+            <p>Loading view...</p>
+        </div>
+
+        <div id="progress-container">
+            <p>Processing data and calculating risk...</p>
+            <div id="progress-bar">
+                <div id="progress-fill"></div>
+            </div>
+        </div>
+
+        <div id="results-area">
+            <div class="filter-box">
+                <div class="filter-group">
+                    <label for="statusFilter">Filter by Status:</label>
+                    <select id="statusFilter">
+                        <option value="all">All</option>
+                        <option value="Retain">Retain</option>
+                        <option value="Likely Churn">Likely Churn</option>
+                        <option value="Certain Churn">Certain Churn</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="sortOrder">Sort By:</label>
+                    <select id="sortOrder">
+                        <option value="id_asc" selected>Customer ID (Ascending)</option>
+                        <option value="id_desc">Customer ID (Descending)</option>
+                        <option value="prob_desc">Probability (Highest First)</option>
+                        <option value="prob_asc">Probability (Lowest First)</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="rowLimit">Rows to Display:</label>
+                    <select id="rowLimit" class="input-row-limit">
+                        <option value="10">10</option>
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <div class="table-header-row">
+                    <h3 style="margin:0;">Results</h3>
+                </div>
+                <table class="table" id="churnTable">
+                    <thead>
+                        <tr>
+                            <th>CustomerID</th>
+                            <th>Status</th>
+                            <th>Churn Probability</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentlyOpenId = null;
+        let debounceTimer;
+        let featureMeta = { descriptions: {}, ranges: {} };
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Direct listeners for dropdowns
+            document.getElementById('statusFilter').addEventListener('change', fetchData);
+            document.getElementById('sortOrder').addEventListener('change', fetchData);
+            document.getElementById('rowLimit').addEventListener('change', fetchData);
+
+            // Instant load: Default to Active Customers
+            switchView('active_clean.csv');
+        });
+
+        function switchView(filename) {
+            // Update tabs
+            document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+            if (filename.includes('active')) document.getElementById('tab-active').classList.add('active');
+            else document.getElementById('tab-retired').classList.add('active');
+
+            // Trigger "Analysis" (which is just a context switch now due to cache)
+            const formData = new FormData();
+            formData.append('local_file', filename);
+
+            fetch('/analyze', { method: 'POST', body: formData })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        fetchData(); // Load the table rows
+                    } else {
+                        console.error(data.error);
+                        document.getElementById('progress-container').style.display = 'none';
+                        alert("Error loading data: " + data.error);
+                    }
+                })
+                .catch(e => {
+                    document.getElementById('progress-container').style.display = 'none';
+                    alert("Connection failed.");
+                });
+        }
+
+        function resetAnalysis() {
+            if (!confirm("Are you sure you want to clear the current analysis?")) return;
+
+            fetch('/reset', { method: 'POST' })
+                .then(() => {
+                    window.location.reload();
+                });
+        }
+
+        // Helper for other inputs if needed later
+        function debouncedFetch() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                fetchData();
+            }, 400);
+        }
+
+
+
+        function fetchData() {
+            const limitVal = document.getElementById('rowLimit').value;
+
+            const payload = {
+                sort_by: document.getElementById('sortOrder').value,
+                status_filter: document.getElementById('statusFilter').value,
+                limit: limitVal ? parseInt(limitVal) : 25
+            };
+
+            fetch('/get_data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.meta) featureMeta = data.meta;
+                    if (data.rows) renderTable(data.rows);
+                })
+                .catch(e => console.error("Fetch Error:", e));
+        }
+
+        function renderTable(rows) {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+            currentlyOpenId = null;
+
+            // Frontend Limit Safeguard
+            const uiLimit = parseInt(document.getElementById('rowLimit').value) || 25;
+            if (rows.length > uiLimit) {
+                rows = rows.slice(0, uiLimit);
+            }
+
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">No results found</td></tr>';
+                return;
+            }
+
+            rows.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'summary-row';
+
+                // Status Coloring via Classes
+                let statusClass = '';
+                if (row.Status === 'Retain') statusClass = 'status-retain';
+                else if (row.Status === 'Likely Churn') statusClass = 'status-likely';
+                else if (row.Status === 'Certain Churn') statusClass = 'status-certain';
+
+                tr.innerHTML = `
+            <td>${row.original_id}</td>
+            <td class="${statusClass}">${row.Status}</td>
+            <td class="${statusClass}">${row['Churn Probability']}</td>
+            <td>
+                <button id="btn-${index}" class="btn-view" onclick="toggleDetails(${index})">
+                    View Info
+                </button>
+            </td>
+        `;
+                tbody.appendChild(tr);
+
+                // Details Row
+                const detailsTr = document.createElement('tr');
+                detailsTr.id = `details-${index}`;
+                detailsTr.style.display = 'none';
+
+                let detailsHtml = `
+            <td colspan="4" class="details-user-cell">
+                <div class="details-box">
+                    <h4>Top Features Influencing Churn</h4>
+                    <table class="table">
+                        <tr><th>Feature</th><th>Impact (% points)</th></tr>`;
+
+                if (row.shap_top_features) {
+                    row.shap_top_features.forEach(item => {
+                        const featKey = item[0];
+                        const readableName = featureMeta.descriptions[featKey] || featKey;
+                        const val = parseFloat(item[1]);
+                        let colorClass = '';
+                        let displayVal = val + '%';
+
+                        if (val > 0) {
+                            colorClass = 'shap-positive';
+                            displayVal = '+' + val + '%';
+                        } else {
+                            colorClass = 'shap-negative';
+                        }
+
+                        detailsHtml += `<tr><td>${readableName}</td><td class="${colorClass}">${displayVal}</td></tr>`;
+                    });
+                }
+
+                detailsHtml += `</table>
+                    <h4 style="margin-top:20px;">Customer Details</h4>
+                    <table class="table details-table">`;
+
+                for (const [key, val] of Object.entries(row)) {
+                    // Internal keys to skip
+                    if (['shap_top_features', 'shap_full', 'Churn Probability Raw', 'original_id', 'Prediction', 'Status', 'Churn Probability', 'Recommendation'].includes(key)) {
+                        continue;
+                    }
+
+                    const readableName = featureMeta.descriptions[key] || key;
+                    const rangeInfo = featureMeta.ranges[key] || { text: '' };
+                    const shapVal = (row.shap_full && row.shap_full[key] !== undefined) ? row.shap_full[key] : 'N/A';
+
+                    let impactText = `Impact on Churn: ${shapVal}%`;
+                    if (shapVal > 0) impactText += " (Increases Risk)";
+                    else if (shapVal < 0) impactText += " (Decreases Risk)";
+
+                    detailsHtml += `
+                        <tr class="feature-row" title="${impactText}">
+                            <th>
+                                ${readableName}
+                                <div style="font-size:0.75em; color:#999; font-weight:normal;">${key}</div>
+                            </th>
+                            <td>
+                                <div class="feature-val-primary">${val}</div>
+                                ${rangeInfo.text ? `<div class="feature-val-range">${rangeInfo.text}</div>` : ''}
+                            </td>
+                        </tr>`;
+                }
+
+                detailsHtml += `</table></div></td>`;
+                detailsTr.innerHTML = detailsHtml;
+                tbody.appendChild(detailsTr);
+            });
+        }
+
+        function toggleDetails(index) {
+            const row = document.getElementById(`details-${index}`);
+            const btn = document.getElementById(`btn-${index}`);
+
+            if (currentlyOpenId !== null && currentlyOpenId !== index) {
+                document.getElementById(`details-${currentlyOpenId}`).style.display = "none";
+
+                const otherBtn = document.getElementById(`btn-${currentlyOpenId}`);
+                if (otherBtn) {
+                    otherBtn.textContent = "View Info";
+                    otherBtn.classList.remove('btn-hide');
+                }
+            }
+
+            if (row.style.display === "none") {
+                row.style.display = "table-row";
+                btn.textContent = "Hide";
+                btn.classList.add('btn-hide');
+                currentlyOpenId = index;
+            } else {
+                row.style.display = "none";
+                btn.textContent = "View Info";
+                btn.classList.remove('btn-hide');
+                currentlyOpenId = null;
+            }
+        }
+    </script>
+
+    <!-- Model Info Modal -->
+    <div id="info-modal" class="modal-overlay">
+        <div class="modal-content deck-style">
+            <span class="close-btn" onclick="toggleInfo()">×</span>
+            <div class="deck-header">
+                <h2>Model Configuration & Definitions</h2>
+            </div>
+
+            <div class="deck-slide">
+                <h3>Target Variable</h3>
+                <p><strong>Churn vs. Retention:</strong> The model predicts the probability of a policyholder cancelling
+                    or lapsing their policy at the next renewal date.</p>
+                <ul>
+                    <li><strong>0 (Retain):</strong> Policy renewed.</li>
+                    <li><strong>1 (Churn):</strong> Policy cancelled or lapsed.</li>
+                </ul>
+            </div>
+
+            <div class="deck-grid">
+                <div class="deck-slide">
+                    <h3>Observation Window</h3>
+                    <p>The model utilizes customer behavioral data, claim history,
+                        and policy modifications from the previous <strong>3 years</strong> leading up to the renewal
+                        decision point.</p>
+                </div>
+                <div class="deck-slide">
+                    <h3>Prediction Window</h3>
+                    <p>The prediction is valid for the <strong>upcoming renewal cycle (12 months)</strong>.</p>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn-view" onclick="toggleInfo()">Close</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+        function toggleInfo() {
+            const modal = document.getElementById('info-modal');
+            modal.classList.toggle('open');
+        }
+    </script>
+
+</body>
+
+</html>

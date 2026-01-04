@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Dashboard - Churn Insights</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ range(1, 10000) | random }}">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+
+    <div class="container" style="max-width: 1200px;">
+        <div class="nav-bar">
+            <a href="/" class="back-link">← Back to Analysis</a>
+        </div>
+
+        <h1>Executive Dashboard</h1>
+
+        <div class="dashboard-actions">
+            <button class="btn-view" onclick="toggleDeck()">Open Executive Insight Deck</button>
+            <button class="btn-view" onclick="toggleSalesModal()">View Sales Recommendations</button>
+        </div>
+
+        <div id="loading" style="text-align:center; padding: 40px;">Loading dashboard insights...</div>
+        <div id="error-msg" style="display:none; color:red; text-align:center;">No analysis data found. Please run an
+            analysis on the home page first.</div>
+
+        <div id="dashboard-content" style="display:none;">
+            <!-- Top Metrics -->
+            <div class="dashboard-grid metrics-row">
+                <div class="card">
+                    <div class="metric-value" id="total-customers">-</div>
+                    <div class="metric-label">
+                        Total Customers
+                        <span class="help-icon" title="Total number of policyholders in the uploaded dataset.">?</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="metric-value status-certain" id="churn-rate">-</div>
+                    <div class="metric-label">
+                        Certain Churn
+                        <span class="help-icon"
+                            title="Percentage of customers identified as 'Certain Churn' (>85% probability).">?</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="metric-value status-likely" id="val-risk-likely">-</div>
+                    <div class="metric-label">
+                        Likely Risk
+                        <span class="help-icon"
+                            title="Total Annual Premium exposed to 'Likely Churn' risk (46-85% probability).">?</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="metric-value status-certain" id="val-risk-certain">-</div>
+                    <div class="metric-label">
+                        Certain Risk
+                        <span class="help-icon"
+                            title="Total Annual Premium exposed to 'Certain Churn' risk (>85% probability).">?</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="metric-value status-retain" id="rev-saved">-</div>
+                    <div class="metric-label">
+                        Potential Savings
+                        <span class="help-icon"
+                            title="Estimated revenue retained if 20% of all at-risk customers are successfully saved.">?</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>Top Drivers of Churn</h3>
+                    <p style="font-size:0.9em; color:#94a3b8; margin-bottom:15px;">
+                        Features that most strongly <strong>increase</strong> churn probability.
+                        <br><em>Values represent the average percentage point increase in risk (+15.0 means this
+                            feature adds 15% to the risk probability).</em>
+                    </p>
+                    <div class="chart-container">
+                        <canvas id="churnChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Top Retention Factors</h3>
+                    <p style="font-size:0.9em; color:#94a3b8; margin-bottom:15px;">
+                        Features that most strongly <strong>prevent</strong> churn.
+                        <br><em>Values represent the average percentage point reduction in risk.</em>
+                    </p>
+                    <div class="chart-container">
+                        <canvas id="retentionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+
+    <!-- Insight Deck Modal -->
+    <div id="deck-modal" class="modal-overlay">
+        <div class="modal-content deck-style">
+            <span class="close-btn" onclick="toggleDeck()">×</span>
+            <div class="deck-header">
+                <h2>Executive Insight Deck</h2>
+                <p>Strategic Overview of Churn Risk & Revenue Impact</p>
+            </div>
+
+            <div class="deck-slide">
+                <h3>Problem Statement</h3>
+                <p>Revenue leakage due to customer churn has the potential to erode annual growth. Retention efforts are
+                    currently
+                    reactive rather than proactive, leading to loss of high-value customers who show early warning signs
+                    of dissatisfaction.</p>
+            </div>
+
+            <div class="deck-slide">
+                <h3>Summary of Data</h3>
+                <p>Analysis performed on policyholder dataset, utilizing historical behavioral data, claims
+                    history, and policy interactions. Data quality is high with coverage of key demographics and policy
+                    variables. This can be converted to a database for future analysis. And constant updates can be made
+                    to the model and predictions.</p>
+            </div>
+
+            <div class="deck-grid">
+                <div class="deck-slide">
+                    <h3>Key Findings</h3>
+                    <ul>
+                        <li><strong>High Risk Segment:</strong> ~15% of the customer base accounts for 40% of potential
+                            churn revenue risk.</li>
+                        <li><strong>Engagement Gap:</strong> Customers with zero touchpoints (claims or inquiries) in 2
+                            years are silently churning.</li>
+                    </ul>
+                </div>
+                <div class="deck-slide">
+                    <h3>Top Drivers (Ranked)</h3>
+                    <ol>
+                        <li><strong>Claim History (3 Years):</strong> Recent negative claim experiences.</li>
+                        <li><strong>Employment Status:</strong> Changes in economic stability.</li>
+                        <li><strong>Annual Premium Increases:</strong> Sharp year-over-year hikes.</li>
+                        <li><strong>Payment Method:</strong> Monthly payers churn faster than annual.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="deck-slide">
+                <h3>Customer Risk Segmentation</h3>
+                <p>We classify customers into three distinct tiers:</p>
+                <ul>
+                    <li><span class="status-badge status-certain">Certain Churn (>85%)</span>: Lost causes. Do not
+                        invest heavy resources. Auto-email campaigns only.</li>
+                    <li><span class="status-badge status-likely">Likely Churn (46-85%)</span>: <strong>The
+                            Battleground.</strong> Undecided customers where intervention pays off.</li>
+                    <li><span class="status-badge status-retain">Retain (&lt;46%)</span>: Safe. Monitor for sudden
+                        changes
+                        only.</li>
+                </ul>
+            </div>
+
+            <div class="deck-slide">
+                <h3>Recommendations for Sales Leadership</h3>
+                <p><strong>Immediate Action:</strong> Shift focus from specific "Save Teams" to equipping front-line
+                    agents with "Likely Churn" flags.</p>
+                <p><strong>Strategy:</strong> Implement a "Value Review" call 60 days pre-renewal for all policies >$500
+                    in the Likely Churn bucket.</p>
+            </div>
+
+            <div class="deck-slide">
+                <h3>Limitations & Assumptions</h3>
+                <p>Model assumes historical behavior predicts future outcomes. External market shocks (competitor price
+                    wars) are not modeled. "Reason for churn" is inferred from data patterns, not explicit customer
+                    feedback.</p>
+            </div>
+
+            <div class="deck-slide">
+                <h3>Next Steps & Options</h3>
+                <ul>
+                    <li><strong>Option A (Recommended):</strong> Operationalize the "Likely Churn" list into
+                        Salesforce/CRM immediately.</li>
+                    <li><strong>Option B:</strong> Run a 3-month A/B test on the "Likely Churn" group (Intervention vs
+                        Control) to measure exact ROI.</li>
+                    <li><strong>Option C:</strong> Expand model to include customer sentiment data (emails/calls).</li>
+                </ul>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn-view" onclick="toggleDeck()">Close Deck</button>
+            </div>
+        </div>
+    </div>
+    <!-- Sales Recommendations Modal -->
+    <div id="sales-modal" class="modal-overlay">
+        <div class="modal-content deck-style" style="max-width: 1000px;">
+            <span class="close-btn" onclick="toggleSalesModal()">×</span>
+            <div class="deck-header">
+                <h2>Sales Team Recommendations</h2>
+                <p>Strategic Guidance for Sales Leadership</p>
+            </div>
+
+            <div class="recommendation-grid">
+                <div class="rec-item">
+                    <h3>Prioritization Strategy</h3>
+                    <p><strong>Who to target?</strong> Focus immediately on <strong>"Likely Churn" (46-85%
+                            risk)</strong> customers with high annual premiums.</p>
+                    <p><em>Rationale:</em> These customers are undecided. "Certain Churn" (>85%) are often too
+                        costly to save. "Likely Churn" offers the highest ROI on intervention.</p>
+                </div>
+
+                <div class="rec-item">
+                    <h3>Timing of Outreach</h3>
+                    <ul>
+                        <li><strong>90-60 Days Before Renewal:</strong> Ideal window for value-add conversations.
+                        </li>
+                        <li><strong>Post-Claim (30 days):</strong> High vulnerability period. Check in on
+                            satisfaction.</li>
+                        <li><strong>Mid-Term Adjustment (MTA):</strong> If premium increased, verify value
+                            change in perception.</li>
+                    </ul>
+                </div>
+
+                <div class="rec-item">
+                    <h3>Risk Indicators</h3>
+                    <ul>
+                        <li><strong>Recent Claim 3 Years:</strong> Customers with recent claims are more likely to
+                            churn.</li>
+                        <li><strong>Price Sensitivity:</strong> Customers paying monthly/fortnightly are more
+                            sensitive to increases.</li>
+                        <li><strong>Economic Stability:</strong> Changes in employment status often lead to shopping
+                            around.</li>
+                    </ul>
+                </div>
+
+                <div class="rec-item">
+                    <h3>Controllable Sales Levers</h3>
+                    <table class="simple-table">
+                        <tr>
+                            <th>Lever (Effort)</th>
+                            <th>Impact</th>
+                            <th>Action</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Policy Review (Med)</strong></td>
+                            <td>Right-size coverage to reduce premium bloat without losing the policy.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Discounts (Low)</strong></td>
+                            <td>Apply discretionary "Loyalty Discount" if NCD > 5 years.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Payment Plans (Low)</strong></td>
+                            <td>Offer switch to interest-free monthly payments if affordability is the friction
+                                point.</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 40px;">
+                <button class="btn-view" onclick="toggleSalesModal()">Close Recommendations</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+        function toggleDeck() {
+            const modal = document.getElementById('deck-modal');
+            modal.classList.toggle('open');
+        }
+
+        function toggleSalesModal() {
+            const modal = document.getElementById('sales-modal');
+            modal.classList.toggle('open');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/get_dashboard_stats')
+                .then(response => {
+                    if (!response.ok) throw new Error("No data");
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('dashboard-content').style.display = 'block';
+
+                    // Populate metrics
+                    document.getElementById('total-customers').textContent = data.summary.total_customers.toLocaleString();
+                    document.getElementById('churn-rate').textContent = data.summary.churn_rate + '%';
+
+                    const formatCurrency = (val) => {
+                        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumSignificantDigits: 3 }).format(val);
+                    };
+                    document.getElementById('val-risk-likely').textContent = formatCurrency(data.summary.risk_likely || 0);
+
+                    document.getElementById('val-risk-certain').textContent = formatCurrency(data.summary.risk_certain || 0);
+                    document.getElementById('rev-saved').textContent = formatCurrency(data.summary.revenue_saved || 0);
+
+                    // Render Charts
+                    renderChart('churnChart', data.churn_drivers, '#ef4444', 'Average Impact (+% Risk)');
+                    renderChart('retentionChart', data.retention_drivers, '#10b981', 'Average Impact (-% Risk)');
+                })
+                .catch(err => {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('error-msg').style.display = 'block';
+                });
+        });
+
+        function renderChart(canvasId, data, color, label) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.feature),
+                    datasets: [{
+                        label: label,
+                        data: data.map(d => d.impact),
+                        backgroundColor: color,
+                        borderRadius: 4,
+                        barThickness: 20
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', // Horizontal bar chart
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    color: '#cbd5e1', // Global text color
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#334155'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                autoSkip: false, // Ensure all labels are shown
+                                color: '#cbd5e1', // Higher contrast for feature names
+                                font: { size: 11 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+
+</body>
+
+</html>
