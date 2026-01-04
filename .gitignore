@@ -144,6 +144,18 @@ ENV/
 env.bak/
 venv.bak/
 
+# model files
+Web/models/*.pkl
+
+# data files
+pipeline/active_clean.csv
+pipeline/retired_clean.csv
+
+# python & os junk
+__pycache__/
+*.pyc
+.DS_Store
+
 # Spyder project settings
 .spyderproject
 .spyproject
