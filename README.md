@@ -14,7 +14,7 @@ A professional-grade web application built with **Flask** and **XGBoost** to pre
 * **Backend:** Python (Flask)
 * **Machine Learning:** XGBoost, Scikit-Learn, Joblib
 * **Explainable AI:** SHAP (Shapley Additive Explanations)
-* **Frontend:** HTML5, CSS3 (Modern Dark Theme), Chart.js
+* **Frontend:** HTML5, CSS3, Chart.js
 * **Infrastructure:** AWS (EC2), Nginx, Gunicorn
 
 ## Project Structure
