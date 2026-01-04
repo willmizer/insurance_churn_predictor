@@ -1,5 +1,7 @@
 # Student Happiness & Churn Analytics Dashboard
 
+[![Live Demo](https://insurance-churn-predictor.duckdns.org/dashboard)
+
 A professional-grade web application built with **Flask** and **XGBoost** to predict student/customer churn. This project utilizes an ensemble machine learning approach to provide real-time retention insights and executive-level data visualization.
 
 ## Key Features
