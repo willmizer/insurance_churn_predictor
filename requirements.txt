@@ -3,7 +3,6 @@ pandas
 numpy
 xgboost
 lightgbm
-pip install lightgbm
 scikit-learn
 joblib
 shap
