@@ -1,4 +1,4 @@
-# Student Happiness & Churn Analytics Dashboard
+# Churn Analytics Dashboard
 
 [![Live Demo](https://img.shields.io/badge/AWS-Live_Demo-FF9900?style=for-the-badge&logo=amazon-aws)](https://insurance-churn-predictor.duckdns.org/)
 
