@@ -1,6 +1,6 @@
 # Churn Analytics Dashboard
 
-[![Live Demo](https://img.shields.io/badge/AWS-Live_Demo-FF9900?style=for-the-badge&logo=amazon-aws)](https://insurance-churn-predictor.duckdns.org/)
+[![Live Demo](https://img.shields.io/badge/AWS-Live_Demo-FF9900?style=for-the-badge&logo=amazon-aws)](https://insurance-churn-predictor.duckdns.org/) - currently down
 
 A professional-grade web application built with **Flask** and **XGBoost** to predict student/customer churn. This project utilizes an ensemble machine learning approach to provide real-time retention insights and executive-level data visualization.
 
