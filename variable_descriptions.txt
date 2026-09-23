@@ -1,0 +1,68 @@
+AD_BUILDINGS:Building Accidental Damage
+AD_CONTENTS:Contents Accidental Damage
+APPR_ALARM:Approved Alarm
+APPR_LOCKS:Approved Locks
+BEDROOMS:Bedrooms
+BUILDINGS_COVER:Buildings Cover Active
+BUS_USE:Business Use
+CLAIM3YEARS:Claims (3yrs)
+CLERICAL:Home Office Use
+CONTENTS_COVER:Contents Cover Active
+DAYS_SINCE_MTA:Days Since Last Change
+DAYS_TO_BIND:Days To Inception
+FLOODING:Flood Risk
+GARDEN_ADDON_POST_REN:Garden Cover (Post-Renewal)
+GARDEN_ADDON_PRE_REN:Garden Cover (Pre-Renewal)
+HAS_ADJUSTED:Premium Adjusted
+HAS_MTA:Has Mid-Term Change
+HAS_PT_EMP:Part-Time Employee
+HOME_EM_ADDON_POST_REN:Home Emergency (Post-Renewal)
+HOME_EM_ADDON_PRE_REN:Home Emergency (Pre-Renewal)
+HP1_ADDON_POST_REN:Home Protection P1 (Post)
+HP1_ADDON_PRE_REN:Home Protection P1 (Pre)
+HP2_ADDON_POST_REN:Home Protection P2 (Post)
+HP2_ADDON_PRE_REN:Home Protection P2 (Pre)
+HP3_ADDON_POST_REN:Home Protection P3 (Post)
+HP3_ADDON_PRE_REN:Home Protection P3 (Pre)
+HP3_ADDON_PRE_REN:Home Protection P3 (Pre)
+IS_STANDARD_OCCUPANCY:Standard Occupancy
+KEYCARE_ADDON_POST_REN:Key Replacement (Post-Renewal)
+KEYCARE_ADDON_PRE_REN:Key Replacement (Pre-Renewal)
+LAST_ANN_PREM_GROSS:Previous Annual Premium
+LEGAL_ADDON_POST_REN:Legal Fees (Post-Renewal)
+LEGAL_ADDON_PRE_REN:Legal Fees (Pre-Renewal)
+LISTED:Heritage Status
+MAR_STATUS_Couple:Married/Couple
+MAR_STATUS_Solo:Single/Solo
+MAX_DAYS_UNOCC:Max Days Unoccupied
+MTA_APRP:Adjustment Premium Change
+MTA_FAP:Adjustment Bonus
+MTA_FLAG:Mid-Term Adjustment
+NCD_GRANTED_YEARS_B:NCD Years (Buildings)
+NCD_GRANTED_YEARS_C:NCD Years (Contents)
+NEIGH_WATCH:Neighborhood Watch
+OWNERSHIP_TYPE:Ownership Type
+P1_AGE:Policyholder Age
+P1_POLICY_REFUSED:Refusal History
+P1_SEX:Gender
+PAYING_GUESTS:Paying Guests
+PAYMENT_FREQUENCY:Payment Frequency
+PAYMENT_METHOD:Payment Method
+POL_STATUS:Policy Status
+PROP_AGE:Property Age
+PROP_TYPE:Property Type
+QUOTE_MONTH:Quote Month
+QUOTE_WEEKDAY:Quote Weekday
+RISK_RATED_AREA_B:Building Risk Area
+RISK_RATED_AREA_C:Contents Risk Area
+ROOF_CONSTRUCTION:Roof Type
+SAFE_INSTALLED:Safe Installed
+SEC_DISC_REQ:Security Discount
+SPEC_ITEM_PREM:High Value Premium
+SPEC_SUM_INSURED:Valuables Sum Insured
+SUBSIDENCE:Subsidence Risk
+SUM_INSURED_BUILDINGS:Building Sum Insured
+SUM_INSURED_CONTENTS:Contents Sum Insured
+UNSPEC_HRP_PREM:Misc Risk Premium
+WALL_CONSTRUCTION:Wall Type
+YEARBUILT:Year Built
