@@ -196,6 +196,22 @@ def process_dataset(dataset_label):
 
 
 st.set_page_config(page_title="Churn Analytics Dashboard", layout="wide")
+st.markdown(
+    """
+    <style>
+    @media (max-width: 768px) {
+        div[data-testid="stHorizontalBlock"] {
+            flex-direction: column;
+        }
+        div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 st.title("Churn Analytics Dashboard")
 st.caption(
     "A dual-model ensemble (XGBoost + Random Forest + LightGBM for active policyholders, "
