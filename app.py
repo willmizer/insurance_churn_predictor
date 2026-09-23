@@ -242,7 +242,7 @@ with col_left:
             color_discrete_sequence=["#d62728"],
         )
         fig.update_layout(yaxis=dict(autorange="reversed"), height=320, margin=dict(l=10, r=10, t=10, b=10))
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
     else:
         st.info("No positive churn drivers found in this segment.")
 
@@ -255,7 +255,7 @@ with col_right:
             color_discrete_sequence=["#2ca02c"],
         )
         fig.update_layout(yaxis=dict(autorange="reversed"), height=320, margin=dict(l=10, r=10, t=10, b=10))
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
     else:
         st.info("No retention drivers found in this segment.")
 
