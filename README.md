@@ -74,6 +74,17 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
+## Previously Hosted on AWS
+
+This app was originally deployed as a Flask app on AWS instead of Streamlit. It worked, but keeping a paid EC2 instance running around the clock wasn't worth it for a portfolio demo that just needs to be reachable when someone clicks the link, so it moved to Streamlit Community Cloud's free hosting instead.
+
+The original setup, briefly:
+- **Instance:** AWS EC2 `t2.small`, Ubuntu 24.04, security group opened on ports 22 (SSH), 80 (HTTP), and 443 (HTTPS).
+- **Stack:** Nginx (reverse proxy) in front of Gunicorn (WSGI) running the Flask app, with a 300-second worker timeout to give the ML models room to respond.
+- **SSL:** Certbot/Let's Encrypt, terminated at Nginx.
+- **Process management:** a systemd service (`churn_app.service`) so the app auto-restarted on crash or reboot.
+- **Domain:** a free DuckDNS subdomain pointed at the instance's public IP.
+
 ## Future Improvements
 
 - Recalibrate the precision/recall tradeoff with a cost-sensitive threshold rather than a fixed one.
