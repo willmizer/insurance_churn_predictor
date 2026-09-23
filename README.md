@@ -1,6 +1,6 @@
 # Churn Analytics Dashboard
 
-[![Live Demo](https://img.shields.io/badge/Streamlit-Live_Demo-FF4B4B?style=for-the-badge&logo=streamlit)](TODO_STREAMLIT_URL)
+[![Live Demo](https://img.shields.io/badge/Streamlit-Live_Demo-FF4B4B?style=for-the-badge&logo=streamlit)](https://insurance-churn-predictions.streamlit.app/)
 
 An interactive Streamlit dashboard built with **XGBoost**, **Random Forest**, and **LightGBM** to predict home-insurance customer churn. This project uses an ensemble machine learning approach to provide real-time retention insights and executive-level data visualization.
 
