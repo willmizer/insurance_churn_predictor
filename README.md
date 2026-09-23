@@ -26,6 +26,8 @@ Built with an ensemble of XGBoost, Random Forest, and LightGBM, this project pre
 ### 1. Data
 A home-insurance policy dataset (~70 engineered features covering coverage, claims history, property, and demographic attributes) is split into **active** and **retired** policyholder segments, since their churn dynamics differ enough to warrant separate models.
 
+**Data source:** the dataset is a public home insurance policy dataset from Kaggle, not real customer or employer data.
+
 ### 2. Modeling (`pipeline/train_ensemble.py`)
 - **Active segment:** `GridSearchCV` over an XGBoost classifier (`max_depth`, `learning_rate`, `n_estimators`, `scale_pos_weight`), combined into a `VotingClassifier` ensemble with Random Forest and LightGBM.
 - **Retired segment:** a separately grid-searched, optimized XGBoost model.
