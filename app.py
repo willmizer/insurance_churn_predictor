@@ -5,6 +5,8 @@ import joblib
 import shap
 import plotly.express as px
 import streamlit as st
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.model_selection import train_test_split
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODELS_DIR = os.path.join(BASE_DIR, "models")
@@ -116,7 +118,19 @@ def process_dataset(dataset_label):
     X = df[feature_names]
     X.columns = X.columns.astype(str)
 
-    probs = model.predict_proba(X)[:, 1]
+    # Calibrate probabilities with Platt scaling on a random 20% holdout drawn from
+    # the training data. Using training data is a known limitation; it still corrects
+    # the overconfidence-near-extremes bias common in tree ensembles.
+    if "POL_STATUS" in df.columns:
+        _, X_cal, _, y_cal = train_test_split(
+            X, df["POL_STATUS"], test_size=0.2, random_state=42, stratify=df["POL_STATUS"]
+        )
+        calibrated = CalibratedClassifierCV(model, method="sigmoid", cv="prefit")
+        calibrated.fit(X_cal, y_cal)
+        probs = calibrated.predict_proba(X)[:, 1]
+    else:
+        probs = model.predict_proba(X)[:, 1]
+
     df["Churn Probability Raw"] = probs * 100
 
     thresh = load_active_threshold() if info["key"] == "active" else 0.5
@@ -129,8 +143,17 @@ def process_dataset(dataset_label):
             return "Likely Churn"
         return "Certain Churn"
 
+    def confidence_label(p):
+        gap = abs(p / 100.0 - thresh)
+        if gap >= 0.25:
+            return "High"
+        elif gap >= 0.12:
+            return "Moderate"
+        return "Borderline"
+
     df["Status"] = df["Churn Probability Raw"].apply(classify)
     df["Churn Probability"] = df["Churn Probability Raw"].apply(lambda p: f"{p:.2f}%")
+    df["Confidence"] = df["Churn Probability Raw"].apply(confidence_label)
 
     # SHAP explainability (fast enough on the full dataset for this data size)
     explainer_model = model
@@ -296,7 +319,7 @@ table_df = table_df.sort_values(
     key=lambda s: s.str.rstrip("%").astype(float),
 )
 
-show_cols = [c for c in ["Status", "Churn Probability", "Top Driver", "Recommendation"] if c in table_df.columns]
+show_cols = [c for c in ["Status", "Churn Probability", "Confidence", "Top Driver", "Recommendation"] if c in table_df.columns]
 st.dataframe(table_df[show_cols].head(row_limit), width="stretch", height=420)
 
 with st.expander("Feature glossary"):
