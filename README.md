@@ -89,6 +89,14 @@ The original setup, briefly:
 - **Process management:** a systemd service (`churn_app.service`) so the app auto-restarted on crash or reboot.
 - **Domain:** a free DuckDNS subdomain pointed at the instance's public IP.
 
+## Limitations
+
+- Built on a public Kaggle home insurance dataset — churn dynamics and feature distributions may not generalize to other insurers, markets, or product lines.
+- Active-segment precision is 0.44–0.45 at the target recall level: roughly half of flagged customers will not actually churn. The model is designed for triaging outreach priority, not binary classification.
+- No temporal validation — the model was not tested on a forward-looking holdout (e.g., train on year 1, predict year 2), so real-world drift performance is unknown.
+- The VaR revenue figure uses a 20% illustrative retention rate; actual recoverable revenue depends entirely on the retention intervention and the insurer's baseline capability.
+- SHAP recommendations map correlated features to canned actions — they identify association, not causation; acting on them does not guarantee churn reduction.
+
 ## Future Improvements
 
 - Recalibrate the precision/recall tradeoff with a cost-sensitive threshold rather than a fixed one.
