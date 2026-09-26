@@ -15,6 +15,10 @@ Built with an ensemble of XGBoost, Random Forest, and LightGBM, this project pre
 - **Executive dashboard:** summary metrics, value-at-risk assessment, and top churn/retention driver charts.
 - **Customer-level table:** filter by churn status, sort by churn probability, and see the top SHAP-driven recommendation per customer.
 
+## Data Source
+
+The dataset is a publicly available home insurance policy dataset from Kaggle — not real customer or employer data.
+
 ## Tech Stack
 
 - **App:** Python, Streamlit, Plotly
@@ -26,8 +30,6 @@ Built with an ensemble of XGBoost, Random Forest, and LightGBM, this project pre
 ### 1. Data
 A home-insurance policy dataset (~70 engineered features covering coverage, claims history, property, and demographic attributes) is split into **active** and **retired** policyholder segments, since their churn dynamics differ enough to warrant separate models.
 
-**Data source:** the dataset is a public home insurance policy dataset from Kaggle, not real customer or employer data.
-
 ### 2. Modeling (`pipeline/train_ensemble.py`)
 - **Active segment:** `GridSearchCV` over an XGBoost classifier (`max_depth`, `learning_rate`, `n_estimators`, `scale_pos_weight`), combined into a `VotingClassifier` ensemble with Random Forest and LightGBM.
 - **Retired segment:** a separately grid-searched, optimized XGBoost model.
@@ -37,7 +39,7 @@ A home-insurance policy dataset (~70 engineered features covering coverage, clai
 - SHAP `TreeExplainer` runs on every row (not a sample; benchmarked at under 1.1 seconds even for the 146k-row retired segment) to get per-customer feature contributions.
 - The strongest positive SHAP driver per customer maps to a canned recommendation (e.g. "Review recent claim history," "Highlight No Claims Discount benefits") via a rule table.
 - Aggregate churn/retention drivers are the mean SHAP impact per feature across all customers.
-- Value-at-risk sums `LAST_ANN_PREM_GROSS` for customers classified Likely/Certain Churn; estimated revenue saved assumes retaining 20% of that at-risk premium.
+- Value-at-risk sums `LAST_ANN_PREM_GROSS` for customers classified Likely/Certain Churn; estimated revenue saved assumes retaining 20% of that at-risk premium (a conservative illustrative assumption — actual recoverable revenue depends on the specific retention intervention used).
 
 ## Key Results
 

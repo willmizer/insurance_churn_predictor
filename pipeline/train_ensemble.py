@@ -16,7 +16,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR) # one level up
 
 DEFAULT_INPUT_FILE = os.path.join(PROJECT_ROOT, 'home_insurance.csv')
-MODELS_DIR = os.path.join(PROJECT_ROOT, 'Web', 'models')
+MODELS_DIR = os.path.join(PROJECT_ROOT, 'models')
 OUTPUT_DIR = SCRIPT_DIR
 TARGET_RECALL = 0.80
 RANDOM_STATE = 42
@@ -46,8 +46,6 @@ def load_and_clean_data(filepath):
     df['MTA_FAP'] = df['MTA_FAP'].fillna(0)
     df['MTA_APRP'] = df['MTA_APRP'].fillna(0)
     df['PAYMENT_FREQUENCY'] = df['PAYMENT_FREQUENCY'].fillna(1) # default to annually if missing
-  
-    df['PAYMENT_FREQUENCY'] = df['PAYMENT_FREQUENCY'].fillna(2)
 
     # impute risk rated areas by prop type
     if 'RISK_RATED_AREA_B' in df.columns and 'PROP_TYPE' in df.columns:
