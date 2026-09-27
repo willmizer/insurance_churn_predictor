@@ -14,8 +14,8 @@ DATA_DIR = os.path.join(BASE_DIR, "pipeline")
 VAR_DESC_PATH = os.path.join(BASE_DIR, "variable_descriptions.txt")
 
 DATASETS = {
-    "Active customers": {"key": "active", "file": "active_clean.csv", "model": "ensemble_model.pkl"},
-    "Retired customers": {"key": "retired", "file": "retired_clean.csv", "model": "xgb_retired_optimized.pkl"},
+    "Employed Policyholders": {"key": "active", "file": "active_clean.csv", "model": "ensemble_model.pkl"},
+    "Retired Policyholders": {"key": "retired", "file": "retired_clean.csv", "model": "xgb_retired_optimized.pkl"},
 }
 
 RECOMMENDATION_RULES = {
